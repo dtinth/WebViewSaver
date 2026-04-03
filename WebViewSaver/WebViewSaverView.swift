@@ -100,7 +100,6 @@ private struct LoadingWebView: View {
 
 @MainActor
 private final class ScreenSaverWebView: WKWebView {
-    @MainActor
     var didStartLoadingInitialRequest = false
 }
 
@@ -149,7 +148,6 @@ private struct WebView: NSViewRepresentable {
         }
     }
 
-    @MainActor
     class Coordinator: NSObject, WKNavigationDelegate {
         let parent: WebView
         var progressObservation: NSKeyValueObservation?
