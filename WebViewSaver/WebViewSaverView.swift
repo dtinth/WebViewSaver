@@ -17,9 +17,14 @@ class WebViewSaverView: ScreenSaverView {
 
         let contentView = ContentView()
         let hostingController = NSHostingController(rootView: contentView)
-        hostingController.view.frame = bounds
-        hostingController.view.autoresizingMask = [.width, .height]
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
         addSubview(hostingController.view)
+        NSLayoutConstraint.activate([
+            hostingController.view.leadingAnchor.constraint(equalTo: leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: trailingAnchor),
+            hostingController.view.topAnchor.constraint(equalTo: topAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
     }
 
     required init?(coder: NSCoder) {
@@ -51,8 +56,10 @@ private func configFilePath() -> String {
 private struct ContentView: View {
     var body: some View {
         if let urlString = readConfigURL(), let url = URL(string: urlString) {
-            LoadingWebView(url: url, urlString: urlString)
-                .ignoresSafeArea()
+            GeometryReader { geometry in
+                LoadingWebView(url: url, urlString: urlString, viewportSize: geometry.size)
+            }
+            .ignoresSafeArea()
         } else {
             ZStack {
                 Color.black
@@ -70,6 +77,7 @@ private struct ContentView: View {
 private struct LoadingWebView: View {
     let url: URL
     let urlString: String
+    let viewportSize: CGSize
     @State private var isLoaded = false
     @State private var loadProgress: Double = 0
 
@@ -77,7 +85,7 @@ private struct LoadingWebView: View {
         ZStack {
             Color.black
 
-            WebView(url: url, isLoaded: $isLoaded, loadProgress: $loadProgress)
+            WebView(url: url, viewportSize: viewportSize, isLoaded: $isLoaded, loadProgress: $loadProgress)
                 .opacity(isLoaded ? 1 : 0)
                 .animation(.easeIn(duration: 0.3), value: isLoaded)
 
@@ -92,6 +100,7 @@ private struct LoadingWebView: View {
 
 private struct WebView: NSViewRepresentable {
     let url: URL
+    let viewportSize: CGSize
     @Binding var isLoaded: Bool
     @Binding var loadProgress: Double
 
@@ -100,7 +109,7 @@ private struct WebView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> WKWebView {
-        let webView = WKWebView(frame: .zero)
+        let webView = WKWebView(frame: CGRect(origin: .zero, size: viewportSize))
 
         // Disable window occlusion detection so animations aren't throttled.
         // Fix from: https://github.com/liquidx/webviewscreensaver/commit/8271566
@@ -115,15 +124,27 @@ private struct WebView: NSViewRepresentable {
             }
         }
 
-        webView.load(URLRequest(url: url))
         return webView
     }
 
     func updateNSView(_ nsView: WKWebView, context: Context) {
+        guard viewportSize.width > 0, viewportSize.height > 0 else {
+            return
+        }
+
+        if nsView.frame.size != viewportSize {
+            nsView.setFrameSize(viewportSize)
+        }
+
+        if !context.coordinator.hasLoaded {
+            nsView.load(URLRequest(url: url))
+            context.coordinator.hasLoaded = true
+        }
     }
 
     class Coordinator: NSObject, WKNavigationDelegate {
         let parent: WebView
+        var hasLoaded = false
         var progressObservation: NSKeyValueObservation?
 
         init(_ parent: WebView) {
