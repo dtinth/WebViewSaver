@@ -99,6 +99,11 @@ private struct LoadingWebView: View {
 }
 
 @MainActor
+private final class ScreenSaverWebView: WKWebView {
+    var didStartLoadingInitialRequest = false
+}
+
+@MainActor
 private struct WebView: NSViewRepresentable {
     let url: URL
     let viewportSize: CGSize
@@ -109,8 +114,8 @@ private struct WebView: NSViewRepresentable {
         Coordinator(self)
     }
 
-    func makeNSView(context: Context) -> WKWebView {
-        let webView = WKWebView(frame: CGRect(origin: .zero, size: viewportSize))
+    func makeNSView(context: Context) -> ScreenSaverWebView {
+        let webView = ScreenSaverWebView(frame: CGRect(origin: .zero, size: viewportSize))
 
         // Disable window occlusion detection so animations aren't throttled.
         // Fix from: https://github.com/liquidx/webviewscreensaver/commit/8271566
@@ -128,7 +133,7 @@ private struct WebView: NSViewRepresentable {
         return webView
     }
 
-    func updateNSView(_ nsView: WKWebView, context: Context) {
+    func updateNSView(_ nsView: ScreenSaverWebView, context: Context) {
         guard viewportSize.width > 0, viewportSize.height > 0 else {
             return
         }
@@ -137,8 +142,9 @@ private struct WebView: NSViewRepresentable {
             nsView.setFrameSize(viewportSize)
         }
 
-        if nsView.url != url, !nsView.isLoading {
+        if !nsView.didStartLoadingInitialRequest {
             nsView.load(URLRequest(url: url))
+            nsView.didStartLoadingInitialRequest = true
         }
     }
 
