@@ -98,6 +98,7 @@ private struct LoadingWebView: View {
     }
 }
 
+@MainActor
 private struct WebView: NSViewRepresentable {
     let url: URL
     let viewportSize: CGSize
@@ -142,6 +143,7 @@ private struct WebView: NSViewRepresentable {
         }
     }
 
+    @MainActor
     class Coordinator: NSObject, WKNavigationDelegate {
         let parent: WebView
         var hasLoaded = false
