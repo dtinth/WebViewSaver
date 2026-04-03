@@ -114,6 +114,8 @@ private final class ScreenSaverWebView: WKWebView {
 
 @MainActor
 private struct WebView: NSViewRepresentable {
+    private static let minimumValidViewportDimension: CGFloat = 1
+
     let url: URL
     let viewportSize: CGSize
     @Binding var isLoaded: Bool
@@ -143,7 +145,9 @@ private struct WebView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: ScreenSaverWebView, context: Context) {
-        guard viewportSize.width >= 1, viewportSize.height >= 1 else {
+        guard viewportSize.width >= Self.minimumValidViewportDimension,
+              viewportSize.height >= Self.minimumValidViewportDimension
+        else {
             return
         }
 
