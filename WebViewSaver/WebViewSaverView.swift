@@ -100,7 +100,16 @@ private struct LoadingWebView: View {
 
 @MainActor
 private final class ScreenSaverWebView: WKWebView {
-    var didStartLoadingInitialRequest = false
+    private(set) var didStartLoadingInitialRequest = false
+
+    func loadInitialRequestIfNeeded(_ request: URLRequest) {
+        guard !didStartLoadingInitialRequest else {
+            return
+        }
+
+        load(request)
+        didStartLoadingInitialRequest = true
+    }
 }
 
 @MainActor
@@ -142,10 +151,7 @@ private struct WebView: NSViewRepresentable {
             nsView.setFrameSize(viewportSize)
         }
 
-        if !nsView.didStartLoadingInitialRequest {
-            nsView.load(URLRequest(url: url))
-            nsView.didStartLoadingInitialRequest = true
-        }
+        nsView.loadInitialRequestIfNeeded(URLRequest(url: url))
     }
 
     class Coordinator: NSObject, WKNavigationDelegate {
