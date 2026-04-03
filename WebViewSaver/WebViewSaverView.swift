@@ -100,6 +100,7 @@ private struct LoadingWebView: View {
 
 @MainActor
 private final class ScreenSaverWebView: WKWebView {
+    @MainActor
     var didStartLoadingInitialRequest = false
 }
 
