@@ -137,16 +137,14 @@ private struct WebView: NSViewRepresentable {
             nsView.setFrameSize(viewportSize)
         }
 
-        if !context.coordinator.hasLoaded {
+        if nsView.url != url, !nsView.isLoading {
             nsView.load(URLRequest(url: url))
-            context.coordinator.hasLoaded = true
         }
     }
 
     @MainActor
     class Coordinator: NSObject, WKNavigationDelegate {
         let parent: WebView
-        var hasLoaded = false
         var progressObservation: NSKeyValueObservation?
 
         init(_ parent: WebView) {
