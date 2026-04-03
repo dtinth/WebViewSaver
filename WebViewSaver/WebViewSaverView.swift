@@ -143,7 +143,7 @@ private struct WebView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: ScreenSaverWebView, context: Context) {
-        guard viewportSize.width > 0, viewportSize.height > 0 else {
+        guard viewportSize.width >= 1, viewportSize.height >= 1 else {
             return
         }
 
